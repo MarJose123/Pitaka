@@ -16,7 +16,7 @@ class PitakaServiceProvider extends PackageServiceProvider
          */
         $package
             ->name('pitaka')
-            ->hasConfigFile();
-        //            ->hasMigrations('create_pitaka_table')
+            ->hasConfigFile()
+            ->hasMigration('create_wallet_table.php');
     }
 }

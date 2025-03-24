@@ -5,6 +5,8 @@
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/marjose123/pitaka/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/marjose123/pitaka/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/marjose123/pitaka.svg?style=flat-square)](https://packagist.org/packages/marjose123/pitaka)
 
+"Pitaka" is a term commonly used in the Philippines that translates to "wallet" in English.
+
 
 ## Installation
 
