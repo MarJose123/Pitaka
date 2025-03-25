@@ -63,7 +63,7 @@ trait CanCalculateWallet
             $this->decrement('balance', $amount);
             $this->refresh();
 
-            $this->transactionJournal(amount: $amount, metadata: $metadata, transaction: $transaction);
+            $this->transaction(amount: $amount, metadata: $metadata, transaction: $transaction);
 
             return $this;
         }
@@ -74,7 +74,7 @@ trait CanCalculateWallet
                 throw new InsufficientBalanceException('Insufficient balance');
             }
 
-            $this->transactionJournal(amount: $amount, metadata: $metadata, transaction: $transaction);
+            $this->transaction(amount: $amount, metadata: $metadata, transaction: $transaction);
 
             $this->decrement('balance', $amount);
             $this->refresh();
@@ -86,7 +86,7 @@ trait CanCalculateWallet
             throw new InsufficientBalanceException('Insufficient balance');
         }
 
-        $this->transactionJournal(amount: $transaction, metadata: $metadata);
+        $this->transaction(amount: $transaction, metadata: $metadata);
 
         $this->decrement('balance', $transaction);
         $this->refresh();
@@ -98,7 +98,7 @@ trait CanCalculateWallet
     /**
      * @throws ReflectionException
      */
-    private function transactionJournal($amount, $metadata, ?WalletTransaction $transaction = null): void
+    private function transaction($amount, $metadata, ?WalletTransaction $transaction = null): void
     {
         $this->transactions()->create([
             'amount' => $amount,
