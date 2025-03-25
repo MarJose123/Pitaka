@@ -5,10 +5,10 @@ return [
      * --------------------------------------------------------------
      *  Wallet Migration
      * --------------------------------------------------------------
-     * This will be used for the Wallet Table
+     * This will be used for the Wallet Table.
      */
     'wallet_table' => [
-        'decimal_places' => 2,
+        'default_decimal_places' => 2,
     ],
 
     /**

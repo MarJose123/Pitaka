@@ -6,9 +6,11 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use MarJose123\Pitaka\Models\Concern\CanCalculateWallet;
 
 class Wallet extends Model
 {
+    use CanCalculateWallet;
     use HasUuids;
 
     protected $fillable = [

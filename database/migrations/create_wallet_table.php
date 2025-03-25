@@ -13,8 +13,8 @@ return new class extends Migration
             $table->uuidMorphs('owner'); // change to morphs() if you are using bigInteger or id for your primary key
             $table->string('name')->unique();
             $table->string('slug')->unique()->index();
-            $table->float('balance')->default(0.00);
-            $table->integer('decimal_places')->default(config('pitaka.wallet_table.decimal_places'));
+            $table->bigInteger('balance')->default(0);
+            $table->integer('decimal_places')->default(config('pitaka.wallet_table.default_decimal_places'));
             $table->json('metadata')->nullable();
             $table->timestamps();
 
@@ -25,9 +25,9 @@ return new class extends Migration
         Schema::create('wallet_transactions', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('wallet_id')->index();
-            $table->uuidMorphs('transaction'); // change to morphs() if you are using bigInteger or id for your primary key
-            $table->float('amount')->default(0.00);
-            $table->float('running_balance')->default(0.00);
+            $table->nullableUuidMorphs('transaction'); // change to morphs() if you are using bigInteger or id for your primary key
+            $table->bigInteger('amount')->default(0);
+            $table->bigInteger('running_balance')->default(0);
             $table->json('metadata')->nullable();
             $table->timestamps();
 
