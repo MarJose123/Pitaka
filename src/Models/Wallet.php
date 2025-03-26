@@ -8,6 +8,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use MarJose123\Pitaka\Models\Concern\CanCalculateWallet;
 
+/**
+ * @property string $owner_id
+ * @property int $balance
+ * @property int $decimal_places
+ * @property float|int $balance_float
+ * @property float|int $int_balance
+ */
 class Wallet extends Model
 {
     use CanCalculateWallet;

@@ -4,6 +4,7 @@ namespace MarJose123\Pitaka\Models\Concern;
 
 use MarJose123\Pitaka\Contract\WalletTransaction;
 use MarJose123\Pitaka\Exceptions\InsufficientBalanceException;
+use MarJose123\Pitaka\Models\Wallet;
 use ReflectionClass;
 use ReflectionException;
 
@@ -36,10 +37,11 @@ trait CanCalculateWallet
             return $this->getBalanceFloatAttribute() > $transaction->getPrice();
         }
 
-        if (\Str::of($transaction)->contains('.')) {
+        if (is_float($transaction)) {
             return $this->balance >= $this->convertToInt($transaction);
         }
 
+        /** @var int $transaction */
         return $this->balance >= $transaction;
     }
 
@@ -68,13 +70,13 @@ trait CanCalculateWallet
             return $this;
         }
 
-        if (\Str::of($transaction)->contains('.')) {
+        if (is_float($transaction)) {
             $amount = $this->convertToInt($transaction);
             if ($amount > $this->balance) {
                 throw new InsufficientBalanceException('Insufficient balance');
             }
 
-            $this->transaction(amount: $amount, metadata: $metadata, transaction: $transaction);
+            $this->transaction(amount: $amount, metadata: $metadata);
 
             $this->decrement('balance', $amount);
             $this->refresh();
@@ -82,6 +84,7 @@ trait CanCalculateWallet
             return $this;
         }
 
+        /** @var int $transaction */
         if ($transaction > $this->balance) {
             throw new InsufficientBalanceException('Insufficient balance');
         }
@@ -98,7 +101,7 @@ trait CanCalculateWallet
     /**
      * @throws ReflectionException
      */
-    private function transaction($amount, $metadata, ?WalletTransaction $transaction = null): void
+    private function transaction(float|int|WalletTransaction $amount, array $metadata, ?WalletTransaction $transaction = null): void
     {
         $this->transactions()->create([
             'amount' => $amount,
