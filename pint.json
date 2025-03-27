@@ -1,0 +1,16 @@
+{
+    "preset": "laravel",
+    "exclude": [
+        "test",
+        "vendor"
+    ],
+    "rules": {
+        "no_superfluous_phpdoc_tags": false,
+        "simplified_null_return": true,
+        "new_with_braces": {
+            "anonymous_class": false,
+            "named_class": false
+        },
+        "return_type_declaration": true
+    }
+}
