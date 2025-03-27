@@ -34,6 +34,24 @@ This is the contents of the published config file:
 
 ```php
 return [
+ /**
+     * --------------------------------------------------------------
+     *  Wallet Migration
+     * --------------------------------------------------------------
+     * This will be used for the Wallet Table.
+     */
+    'wallet_table' => [
+        'default_decimal_places' => 2,
+    ],
+
+    /**
+     *  -------------------------------------------------------------------
+     *  Default User Wallet
+     *  -------------------------------------------------------------------
+     */
+    'user' => [
+        'wallet' => null, // Add your default wallet name here. This will be used if you don't provide a wallet name when calling `$user->wallet()`
+    ],
 ];
 ```
 
@@ -48,7 +66,7 @@ echo $pitaka->echoPhrase('Hello, MarJose123!');
 ## Testing
 
 ```bash
-composer test
+composer package:test
 ```
 
 ## Changelog
