@@ -10,6 +10,9 @@ use ReflectionException;
 
 trait CanCalculateWallet
 {
+    /**
+     * @return int|float
+     */
     public function getBalanceAttribute(): int|float
     {
         if (empty($this->decimal_places) && $this->decimal_places === 0) {
@@ -19,6 +22,9 @@ trait CanCalculateWallet
         return (int) $this->raw_balance / pow(10, $this->decimal_places);
     }
 
+    /**
+     * @return float
+     */
     public function getBalanceFloatAttribute(): float
     {
         return $this->convertToDecimal($this->raw_balance);
@@ -27,6 +33,9 @@ trait CanCalculateWallet
     /**
      * Safe check if the balance still enough for creating transactions.
      * If the balance is enough it will return true, else false.
+     *
+     * @param  float|int|WalletTransaction  $transaction
+     * @return bool
      *
      * @throws ReflectionException
      */
@@ -47,8 +56,12 @@ trait CanCalculateWallet
     /**
      * If the Wallet balance is not enough, an exception will be thrown.
      *
-     * @throws ReflectionException
+     * @param  float|int|WalletTransaction  $transaction
+     * @param  array|null  $metadata
+     * @return $this
+     *
      * @throws InsufficientBalanceException
+     * @throws ReflectionException
      */
     public function pay(float|int|WalletTransaction $transaction, ?array $metadata): static
     {
@@ -99,6 +112,8 @@ trait CanCalculateWallet
     /**
      * This will add an amount to the current wallet balance.
      *
+     * @param  float|int|WalletTransaction  $transaction
+     * @param  array|null  $metadata
      * @return $this
      *
      * @throws ReflectionException
@@ -134,7 +149,9 @@ trait CanCalculateWallet
     /**
      * Fee can be used if you have a transaction charges against the transaction/processing.
      *
-     * @return CanCalculateWallet
+     * @param  float|int|WalletTransaction  $transaction
+     * @param  array|null  $metadata
+     * @return $this
      *
      * @throws InsufficientBalanceException
      * @throws ReflectionException
@@ -181,6 +198,11 @@ trait CanCalculateWallet
     /**
      * Record the transaction happens in the wallet.
      *
+     * @param  float|int|WalletTransaction  $amount
+     * @param  array|null  $metadata
+     * @param  WalletTransaction|null  $transaction
+     * @param  TransactionTypeEnum|null  $transactionType
+     *
      * @throws ReflectionException
      */
     private function transaction(float|int|WalletTransaction $amount, ?array $metadata, ?WalletTransaction $transaction = null, ?TransactionTypeEnum $transactionType = TransactionTypeEnum::PAYMENT): void
@@ -200,6 +222,9 @@ trait CanCalculateWallet
 
     /**
      * Convert Float amount to whole number
+     *
+     * @param  float  $amount
+     * @return int
      */
     private function convertToInt(float $amount): int
     {
@@ -208,6 +233,9 @@ trait CanCalculateWallet
 
     /**
      * Convert to Decimal number format
+     *
+     * @param  int  $amount
+     * @return float
      */
     private function convertToDecimal(int $amount): float
     {
