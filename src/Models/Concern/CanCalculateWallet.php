@@ -26,7 +26,6 @@ trait CanCalculateWallet
 
     /**
      * Safe check if the balance still enough for creating transactions.
-     *
      * If the balance is enough it will return true, else false.
      *
      * @throws ReflectionException
@@ -47,7 +46,6 @@ trait CanCalculateWallet
 
     /**
      * If the Wallet balance is not enough, an exception will be thrown.
-     *
      *
      * @throws ReflectionException
      * @throws InsufficientBalanceException
@@ -134,6 +132,10 @@ trait CanCalculateWallet
     }
 
     /**
+     * Fee can be used if you have a transaction charges against the transaction/processing.
+     *
+     * @return CanCalculateWallet
+     *
      * @throws InsufficientBalanceException
      * @throws ReflectionException
      */
@@ -204,6 +206,9 @@ trait CanCalculateWallet
         return (int) $amount * pow(10, $this->decimal_places);
     }
 
+    /**
+     * Convert to Decimal number format
+     */
     private function convertToDecimal(int $amount): float
     {
         return (float) number_format($amount / pow(10, $this->decimal_places), $this->decimal_places);
