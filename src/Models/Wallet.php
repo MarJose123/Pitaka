@@ -10,10 +10,10 @@ use MarJose123\Pitaka\Models\Concern\CanCalculateWallet;
 
 /**
  * @property string $owner_id
- * @property int $balance
+ * @property int|float $balance
+ * @property int $raw_balance
  * @property int $decimal_places
  * @property float|int $balance_float
- * @property float|int $int_balance
  */
 class Wallet extends Model
 {
@@ -25,14 +25,14 @@ class Wallet extends Model
         'owner_type',
         'name',
         'slug',
-        'balance',
+        'raw_balance',
         'decimal_places',
         'metadata',
     ];
 
     protected $casts = [
         'metadata' => 'array',
-        'balance' => 'float',
+        'raw_balance' => 'int',
     ];
 
     public function owner(): MorphTo

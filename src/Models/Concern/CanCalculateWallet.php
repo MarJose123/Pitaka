@@ -3,25 +3,25 @@
 namespace MarJose123\Pitaka\Models\Concern;
 
 use MarJose123\Pitaka\Contract\WalletTransaction;
+use MarJose123\Pitaka\Enums\TransactionTypeEnum;
 use MarJose123\Pitaka\Exceptions\InsufficientBalanceException;
-use MarJose123\Pitaka\Models\Wallet;
 use ReflectionClass;
 use ReflectionException;
 
 trait CanCalculateWallet
 {
-    public function getIntBalanceAttribute(): int
+    public function getBalanceAttribute(): int|float
     {
         if (empty($this->decimal_places) && $this->decimal_places === 0) {
-            return $this->balance;
+            return $this->raw_balance;
         }
 
-        return (int) $this->balance / pow(10, $this->decimal_places);
+        return (int) $this->raw_balance / pow(10, $this->decimal_places);
     }
 
     public function getBalanceFloatAttribute(): float
     {
-        return (float) number_format($this->balance / pow(10, $this->decimal_places), $this->decimal_places);
+        return $this->convertToDecimal($this->raw_balance);
     }
 
     /**
@@ -34,15 +34,15 @@ trait CanCalculateWallet
     public function check(float|int|WalletTransaction $transaction): bool
     {
         if ((new ReflectionClass($transaction))->implementsInterface(WalletTransaction::class)) {
-            return $this->getBalanceFloatAttribute() > $transaction->getPrice();
+            return $this->getBalanceFloatAttribute() > $transaction->getAmount();
         }
 
         if (is_float($transaction)) {
-            return $this->balance >= $this->convertToInt($transaction);
+            return $this->raw_balance >= $this->convertToInt($transaction);
         }
 
         /** @var int $transaction */
-        return $this->balance >= $transaction;
+        return $this->raw_balance >= $transaction;
     }
 
     /**
@@ -56,13 +56,13 @@ trait CanCalculateWallet
     {
 
         if ((new ReflectionClass($transaction))->implementsInterface(WalletTransaction::class)) {
-            $amount = $this->convertToInt($transaction->getPrice());
+            $amount = $this->convertToInt($transaction->getAmount());
 
-            if ($amount > $this->balance) {
+            if ($amount > $this->raw_balance) {
                 throw new InsufficientBalanceException('Insufficient balance');
             }
 
-            $this->decrement('balance', $amount);
+            $this->decrement('raw_balance', $amount);
             $this->refresh();
 
             $this->transaction(amount: $amount, metadata: $metadata, transaction: $transaction);
@@ -72,26 +72,26 @@ trait CanCalculateWallet
 
         if (is_float($transaction)) {
             $amount = $this->convertToInt($transaction);
-            if ($amount > $this->balance) {
+            if ($amount > $this->raw_balance) {
                 throw new InsufficientBalanceException('Insufficient balance');
             }
 
             $this->transaction(amount: $amount, metadata: $metadata);
 
-            $this->decrement('balance', $amount);
+            $this->decrement('raw_balance', $amount);
             $this->refresh();
 
             return $this;
         }
 
         /** @var int $transaction */
-        if ($transaction > $this->balance) {
+        if ($transaction > $this->raw_balance) {
             throw new InsufficientBalanceException('Insufficient balance');
         }
 
         $this->transaction(amount: $transaction, metadata: $metadata);
 
-        $this->decrement('balance', $transaction);
+        $this->decrement('raw_balance', $transaction);
         $this->refresh();
 
         return $this;
@@ -99,17 +99,98 @@ trait CanCalculateWallet
     }
 
     /**
+     * This will add an amount to the current wallet balance.
+     *
+     * @return $this
+     *
      * @throws ReflectionException
      */
-    private function transaction(float|int|WalletTransaction $amount, array $metadata, ?WalletTransaction $transaction = null): void
+    public function deposit(float|int|WalletTransaction $transaction, ?array $metadata): static
+    {
+        if ((new ReflectionClass($transaction))->implementsInterface(WalletTransaction::class)) {
+            $amount = $this->convertToInt($transaction->getAmount());
+            $this->increment('raw_balance', $amount);
+            $this->refresh();
+
+            $this->transaction(amount: $amount, metadata: $metadata, transaction: $transaction, transactionType: TransactionTypeEnum::DEPOSIT);
+
+            return $this;
+        }
+        if (is_float($transaction)) {
+            $amount = $this->convertToInt($transaction);
+            $this->increment('raw_balance', $amount);
+            $this->refresh();
+            $this->transaction(amount: $amount, metadata: $metadata, transactionType: TransactionTypeEnum::DEPOSIT);
+
+            return $this;
+        }
+
+        $this->transaction(amount: $transaction, metadata: $metadata, transactionType: TransactionTypeEnum::DEPOSIT);
+        $this->increment('raw_balance', $transaction);
+        $this->refresh();
+
+        return $this;
+
+    }
+
+    /**
+     * @throws InsufficientBalanceException
+     * @throws ReflectionException
+     */
+    public function fee(float|int|WalletTransaction $transaction, ?array $metadata): static
+    {
+        if ((new ReflectionClass($transaction))->implementsInterface(WalletTransaction::class)) {
+            $amount = $this->convertToInt($transaction->getAmount());
+            if ($amount > $this->raw_balance) {
+                throw new InsufficientBalanceException('Insufficient balance');
+            }
+            $this->decrement('raw_balance', $amount);
+            $this->refresh();
+            $this->transaction(amount: $amount, metadata: $metadata, transaction: $transaction, transactionType: TransactionTypeEnum::FEE);
+
+            return $this;
+        }
+
+        if (is_float($transaction)) {
+            $amount = $this->convertToInt($transaction);
+            if ($amount > $this->raw_balance) {
+                throw new InsufficientBalanceException('Insufficient balance');
+            }
+            $this->transaction(amount: $amount, metadata: $metadata, transactionType: TransactionTypeEnum::FEE);
+            $this->decrement('raw_balance', $amount);
+            $this->refresh();
+
+            return $this;
+        }
+
+        /** @var int $transaction */
+        if ($transaction > $this->raw_balance) {
+            throw new InsufficientBalanceException('Insufficient balance');
+        }
+
+        $this->transaction(amount: $transaction, metadata: $metadata, transactionType: TransactionTypeEnum::FEE);
+        $this->decrement('raw_balance', $transaction);
+        $this->refresh();
+
+        return $this;
+
+    }
+
+    /**
+     * Record the transaction happens in the wallet.
+     *
+     * @throws ReflectionException
+     */
+    private function transaction(float|int|WalletTransaction $amount, ?array $metadata, ?WalletTransaction $transaction = null, ?TransactionTypeEnum $transactionType = TransactionTypeEnum::PAYMENT): void
     {
         $this->transactions()->create([
             'amount' => $amount,
             ...['transaction_id' => (new ReflectionClass($transaction))->implementsInterface(WalletTransaction::class) ? (new ReflectionClass($transaction))->getMethod('getKey')->invoke($transaction) : []],
             ...['transaction_type' => (new ReflectionClass($transaction))->implementsInterface(WalletTransaction::class) ? get_class($transaction) : []],
-            'running_balance' => $this->balance,
+            'running_balance' => $this->raw_balance,
             'metadata' => [
-                ...$metadata,
+                ...($metadata ?? []),
+                'transaction_type' => (new ReflectionClass($transactionType))->isEnum() ? $transactionType->value : $transactionType,
                 'decimal_places' => $this->decimal_places,
             ],
         ]);
@@ -121,5 +202,10 @@ trait CanCalculateWallet
     private function convertToInt(float $amount): int
     {
         return (int) $amount * pow(10, $this->decimal_places);
+    }
+
+    private function convertToDecimal(int $amount): float
+    {
+        return (float) number_format($amount / pow(10, $this->decimal_places), $this->decimal_places);
     }
 }

@@ -20,7 +20,7 @@ class WalletTransaction extends Model
 
     protected $casts = [
         'metadata' => 'array',
-        'amount' => 'float',
-        'running_balance' => 'float',
+        'amount' => 'int',
+        'running_balance' => 'int',
     ];
 }
