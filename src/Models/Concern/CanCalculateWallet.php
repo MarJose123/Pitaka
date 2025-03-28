@@ -5,6 +5,8 @@ namespace MarJose123\Pitaka\Models\Concern;
 use MarJose123\Pitaka\Contract\WalletTransaction;
 use MarJose123\Pitaka\Enums\TransactionTypeEnum;
 use MarJose123\Pitaka\Exceptions\InsufficientBalanceException;
+use MarJose123\Pitaka\Exceptions\WalletTransferException;
+use MarJose123\Pitaka\Models\Wallet;
 use ReflectionClass;
 use ReflectionException;
 
@@ -140,6 +142,86 @@ trait CanCalculateWallet
 
         $this->transaction(amount: $transaction, metadata: $metadata, transactionType: TransactionTypeEnum::DEPOSIT);
         $this->increment('raw_balance', $transaction);
+        $this->refresh();
+
+        return $this;
+
+    }
+
+    /**
+     * This will withdraw from the user wallet.
+     *
+     * @param  float|int  $amount
+     * @param  array|null  $metadata
+     * @param  float|int  $feeAmount
+     * @return $this
+     *
+     * @throws InsufficientBalanceException
+     * @throws ReflectionException
+     */
+    public function withdraw(float|int $amount, ?array $metadata, float|int $feeAmount = 0): static
+    {
+        $amount = is_float($amount) ? $this->convertToInt($amount) : $amount;
+        $feeAmount = is_float($feeAmount) ? $feeAmount : $amount;
+        if ($feeAmount > 0) {
+            // check to make sure the current wallet has enough balance
+            $combinedAmount = $feeAmount + $amount;
+            if ($combinedAmount > $this->raw_balance) {
+                throw new InsufficientBalanceException('Insufficient balance');
+            }
+        }
+
+        // Create a transaction history for fees
+        $this->fee($feeAmount, $metadata);
+
+        // Create a transaction history for the withdrawal
+        $this->transaction(amount: $amount, metadata: $metadata);
+
+        $this->decrement('raw_balance', $amount);
+        $this->refresh();
+
+        return $this;
+    }
+
+    /**
+     * This will transfer the balance amount to other wallet with/out transfer fee
+     *
+     * @param  float|int  $amount
+     * @param  Wallet  $wallet
+     * @param  array|null  $metadata
+     * @param  float|int  $feeAmount
+     * @return $this
+     *
+     * @throws InsufficientBalanceException
+     * @throws ReflectionException
+     * @throws WalletTransferException
+     */
+    public function transfer(float|int $amount, Wallet $wallet, ?array $metadata, float|int $feeAmount = 0): static
+    {
+        // check if the wallet destination is the current wallet or not
+        if ($this->id === $wallet->id) {
+            throw new WalletTransferException('Unable to transfer to the same wallet');
+        }
+        $amount = is_float($amount) ? $this->convertToInt($amount) : $amount;
+        $feeAmount = is_float($feeAmount) ? $feeAmount : $amount;
+        if ($feeAmount > 0) {
+            // check to make sure the current wallet has enough balance
+            $combinedAmount = $feeAmount + $amount;
+            if ($combinedAmount > $this->raw_balance) {
+                throw new InsufficientBalanceException('Insufficient balance');
+            }
+        }
+
+        // transfer the amount to the destination wallet
+        $wallet->increment('raw_balance', $amount);
+
+        // Create a transaction history for fees
+        $this->fee($feeAmount, $metadata);
+
+        // Create a transaction history for the balance wallet transfer
+        $this->transaction(amount: $amount, metadata: $metadata);
+
+        $this->decrement('raw_balance', $amount);
         $this->refresh();
 
         return $this;
