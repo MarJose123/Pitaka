@@ -15,7 +15,6 @@ use Orchestra\Testbench\TestCase as Orchestra;
 #[WithMigration]
 class TestCase extends Orchestra
 {
-    use LazilyRefreshDatabase;
     use WithWorkbench;
 
     /**
@@ -35,8 +34,13 @@ class TestCase extends Orchestra
     {
         parent::setUp();
 
+        // publish the migration
+        $this->artisan('vendor:publish', ['--provider' => PitakaServiceProvider::class]);
+
+        $this->artisan('migrate', ['--database' => 'testbench'])->run();
+
         Factory::guessFactoryNamesUsing(
-            fn (string $modelName) => 'MarJose123\\Pitaka\\Database\\Factories\\'.class_basename($modelName).'Factory'
+            fn (string $modelName) => 'Workbench\\Database\\Factories\\'.class_basename($modelName).'Factory'
         );
     }
 
