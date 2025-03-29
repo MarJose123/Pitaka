@@ -7,6 +7,24 @@
 
 "Pitaka" is a term commonly used in the Philippines that translates to "wallet" in English.
 
+Easy creation of Wallets and its transactions.
+
+```PHP
+
+ $wallet = $user->wallets()->create([
+        'name' => 'Peso Wallet',
+        'slug' => 'peso-wallet',
+        'raw_balance' => 0,
+        'decimal_places' => 2,
+        'metadata' => [
+            'Currency' => 'PHP',
+        ],
+    ]);
+    
+    
+    $wallet->deposit(1000.58);
+
+```
 
 ## Installation
 
@@ -57,10 +75,42 @@ return [
 
 
 ## Usage
+You can do a transaction in your wallet by using user `relationship` or through model class.
 
+
+### Wallet Deposit Transaction
+Creating a wallet transaction by depositing an amount. You can also use the `Wallet` model class instead.
 ```php
-$pitaka = new MarJose123\Pitaka();
-echo $pitaka->echoPhrase('Hello, MarJose123!');
+ $wallet = $user->wallets()->create([
+        'name' => 'Peso Wallet',
+        'slug' => 'peso-wallet',
+        'raw_balance' => 0,
+        'decimal_places' => 2,
+        'metadata' => [
+            'Currency' => 'PHP',
+        ],
+    ]);
+    
+    
+    $wallet->deposit(1000.58);
+```
+
+
+Creating a wallet transaction by paying an item/shop amount using your wallet.
+```php
+
+```
+
+
+### Retrieve Wallet Balance
+
+```PHP
+$user->wallet('peso-wallet')->balance;
+```
+
+Return wallet balance in decimal format.
+```php
+$user->wallet('peso-wallet')->balance_float;
 ```
 
 ## Testing
