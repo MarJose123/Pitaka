@@ -1,6 +1,7 @@
 <?php
 
 use MarJose123\Pitaka\Exceptions\InsufficientBalanceException;
+
 use function Pest\Laravel\assertDatabaseCount;
 use function PHPUnit\Framework\assertEquals;
 
@@ -44,5 +45,5 @@ test('it will throw an error if wallet have insufficient balance', function () {
     assertDatabaseCount('wallets', 1);
     assertEquals($user->wallet('peso-wallet')->balance, 1000);
 
-    expect(fn() => $wallet->pay(2000))->toThrow(InsufficientBalanceException::class);
+    expect(fn () => $wallet->pay(2000))->toThrow(InsufficientBalanceException::class);
 });
