@@ -10,7 +10,7 @@ use MarJose123\Pitaka\Models\Concern\HasWallets;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasWallets;
+    use HasFactory, HasWallets, Notifiable;
 
     /**
      * The attributes that are mass assignable.
