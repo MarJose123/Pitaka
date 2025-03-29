@@ -1,7 +1,7 @@
 <?php
 
-use MarJose123\Pitaka\Exceptions\WalletNotFoundException;
 use MarJose123\Pitaka\Models\Wallet;
+
 use function PHPUnit\Framework\assertEquals;
 
 test('it can create a wallet for the user through relationship ', function () {
@@ -13,7 +13,7 @@ test('it can create a wallet for the user through relationship ', function () {
         'raw_balance' => 0,
         'decimal_places' => 2,
         'metadata' => [
-            'Currency' => 'PHP'
+            'Currency' => 'PHP',
         ],
     ]);
 
@@ -32,7 +32,7 @@ test('it can create a wallet for the user through Wallet Model class ', function
         'raw_balance' => 0,
         'decimal_places' => 2,
         'metadata' => [
-            'Currency' => 'PHP'
+            'Currency' => 'PHP',
         ],
     ]);
 
