@@ -77,6 +77,9 @@ return [
 ## Usage
 You can do a transaction in your wallet by using user `relationship` or through model class.
 
+> [!CAUTION]
+> Changing your wallet `decimal_places` value may affect your wallet balance result.
+
 
 ### Wallet Deposit Transaction
 Creating a wallet transaction by depositing an amount. You can also use the `Wallet` model class instead.
