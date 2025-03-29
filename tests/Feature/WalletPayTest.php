@@ -26,7 +26,7 @@ test('it can pay using wallet balance', function () {
     $wallet->pay(500);
     assertEquals($user->wallet('peso-wallet')->balance, 500);
 });
-test('it will throw an error if wallet is insufficient balance', function () {
+test('it will throw an error if wallet have insufficient balance', function () {
     $user = \Workbench\App\Models\User::factory()->create();
     $wallet = $user->wallets()->create([
         'name' => 'Peso Wallet',
