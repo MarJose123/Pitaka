@@ -65,26 +65,12 @@ trait CanCalculateWallet
      *
      * @throws InsufficientBalanceException
      * @throws ReflectionException
+     * @throws Exception
      */
     public function pay(float|int|WalletTransaction $transaction, array $metadata = []): static
     {
 
-        if ((new ReflectionClass($transaction))->implementsInterface(WalletTransaction::class)) {
-            $amount = $this->convertToWalletInt($transaction->getAmount());
-
-            if ($amount > $this->raw_balance) {
-                throw new InsufficientBalanceException('Insufficient balance');
-            }
-
-            $this->decrement('raw_balance', $amount);
-            $this->refresh();
-
-            $this->transaction(amount: $amount, metadata: $metadata, transaction: $transaction);
-
-            return $this;
-        }
-
-        if (is_float($transaction)) {
+        if (is_numeric($transaction)) {
             $amount = $this->convertToWalletInt($transaction);
             if ($amount > $this->raw_balance) {
                 throw new InsufficientBalanceException('Insufficient balance');
@@ -98,14 +84,18 @@ trait CanCalculateWallet
             return $this;
         }
 
-        /** @var int $transaction */
-        if ($transaction > $this->raw_balance) {
+        if (! (new ReflectionClass($transaction))->implementsInterface(WalletTransaction::class)) {
+            throw new Exception('Transaction expects parameter to be a number or a WalletTransaction object.');
+        }
+
+        $amount = $this->convertToWalletInt($transaction->getAmount());
+
+        if ($amount > $this->raw_balance) {
             throw new InsufficientBalanceException('Insufficient balance');
         }
 
-        $this->transaction(amount: $transaction, metadata: $metadata);
-
-        $this->decrement('raw_balance', $transaction);
+        $this->transaction(amount: $amount, metadata: $metadata, transaction: $transaction);
+        $this->decrement('raw_balance', $amount);
         $this->refresh();
 
         return $this;
@@ -126,9 +116,9 @@ trait CanCalculateWallet
     {
         if (is_numeric($transaction)) {
             $amount = $this->convertToWalletInt($transaction);
+            $this->transaction(amount: $amount, metadata: $metadata, transactionType: TransactionTypeEnum::DEPOSIT);
             $this->increment('raw_balance', $amount);
             $this->refresh();
-            $this->transaction(amount: $amount, metadata: $metadata, transactionType: TransactionTypeEnum::DEPOSIT);
 
             return $this;
         }
@@ -138,10 +128,9 @@ trait CanCalculateWallet
         }
 
         $amount = $this->convertToWalletInt($transaction->getAmount());
+        $this->transaction(amount: $amount, metadata: $metadata, transaction: $transaction, transactionType: TransactionTypeEnum::DEPOSIT);
         $this->increment('raw_balance', $amount);
         $this->refresh();
-
-        $this->transaction(amount: $amount, metadata: $metadata, transaction: $transaction, transactionType: TransactionTypeEnum::DEPOSIT);
 
         return $this;
 
