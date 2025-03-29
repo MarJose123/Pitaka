@@ -2,6 +2,7 @@
 
 namespace MarJose123\Pitaka\Models\Concern;
 
+use Exception;
 use MarJose123\Pitaka\Contract\WalletTransaction;
 use MarJose123\Pitaka\Enums\TransactionTypeEnum;
 use MarJose123\Pitaka\Exceptions\InsufficientBalanceException;
@@ -48,7 +49,7 @@ trait CanCalculateWallet
         }
 
         if (is_float($transaction)) {
-            return $this->raw_balance >= $this->convertToInt($transaction);
+            return $this->raw_balance >= $this->convertToWalletInt($transaction);
         }
 
         /** @var int $transaction */
@@ -59,17 +60,17 @@ trait CanCalculateWallet
      * If the Wallet balance is not enough, an exception will be thrown.
      *
      * @param  float|int|WalletTransaction  $transaction
-     * @param  array|null  $metadata
+     * @param  array  $metadata
      * @return $this
      *
      * @throws InsufficientBalanceException
      * @throws ReflectionException
      */
-    public function pay(float|int|WalletTransaction $transaction, ?array $metadata): static
+    public function pay(float|int|WalletTransaction $transaction, array $metadata = []): static
     {
 
         if ((new ReflectionClass($transaction))->implementsInterface(WalletTransaction::class)) {
-            $amount = $this->convertToInt($transaction->getAmount());
+            $amount = $this->convertToWalletInt($transaction->getAmount());
 
             if ($amount > $this->raw_balance) {
                 throw new InsufficientBalanceException('Insufficient balance');
@@ -84,7 +85,7 @@ trait CanCalculateWallet
         }
 
         if (is_float($transaction)) {
-            $amount = $this->convertToInt($transaction);
+            $amount = $this->convertToWalletInt($transaction);
             if ($amount > $this->raw_balance) {
                 throw new InsufficientBalanceException('Insufficient balance');
             }
@@ -115,24 +116,16 @@ trait CanCalculateWallet
      * This will add an amount to the current wallet balance.
      *
      * @param  float|int|WalletTransaction  $transaction
-     * @param  array|null  $metadata
+     * @param  array  $metadata
      * @return $this
      *
      * @throws ReflectionException
+     * @throws Exception
      */
-    public function deposit(float|int|WalletTransaction $transaction, ?array $metadata): static
+    public function deposit(float|int|WalletTransaction $transaction, array $metadata = []): static
     {
-        if ((new ReflectionClass($transaction))->implementsInterface(WalletTransaction::class)) {
-            $amount = $this->convertToInt($transaction->getAmount());
-            $this->increment('raw_balance', $amount);
-            $this->refresh();
-
-            $this->transaction(amount: $amount, metadata: $metadata, transaction: $transaction, transactionType: TransactionTypeEnum::DEPOSIT);
-
-            return $this;
-        }
-        if (is_float($transaction)) {
-            $amount = $this->convertToInt($transaction);
+        if (is_numeric($transaction)) {
+            $amount = $this->convertToWalletInt($transaction);
             $this->increment('raw_balance', $amount);
             $this->refresh();
             $this->transaction(amount: $amount, metadata: $metadata, transactionType: TransactionTypeEnum::DEPOSIT);
@@ -140,9 +133,15 @@ trait CanCalculateWallet
             return $this;
         }
 
-        $this->transaction(amount: $transaction, metadata: $metadata, transactionType: TransactionTypeEnum::DEPOSIT);
-        $this->increment('raw_balance', $transaction);
+        if (! (new ReflectionClass($transaction))->implementsInterface(WalletTransaction::class)) {
+            throw new Exception('Transaction expects parameter to be a number or a WalletTransaction object.');
+        }
+
+        $amount = $this->convertToWalletInt($transaction->getAmount());
+        $this->increment('raw_balance', $amount);
         $this->refresh();
+
+        $this->transaction(amount: $amount, metadata: $metadata, transaction: $transaction, transactionType: TransactionTypeEnum::DEPOSIT);
 
         return $this;
 
@@ -152,16 +151,16 @@ trait CanCalculateWallet
      * This will withdraw from the user wallet.
      *
      * @param  float|int  $amount
-     * @param  array|null  $metadata
+     * @param  array  $metadata
      * @param  float|int  $feeAmount
      * @return $this
      *
      * @throws InsufficientBalanceException
      * @throws ReflectionException
      */
-    public function withdraw(float|int $amount, ?array $metadata, float|int $feeAmount = 0): static
+    public function withdraw(float|int $amount, array $metadata = [], float|int $feeAmount = 0): static
     {
-        $amount = is_float($amount) ? $this->convertToInt($amount) : $amount;
+        $amount = is_float($amount) ? $this->convertToWalletInt($amount) : $amount;
         $feeAmount = is_float($feeAmount) ? $feeAmount : $amount;
         if ($feeAmount > 0) {
             // check to make sure the current wallet has enough balance
@@ -188,7 +187,7 @@ trait CanCalculateWallet
      *
      * @param  float|int  $amount
      * @param  Wallet  $wallet
-     * @param  array|null  $metadata
+     * @param  array  $metadata
      * @param  float|int  $feeAmount
      * @return $this
      *
@@ -196,13 +195,13 @@ trait CanCalculateWallet
      * @throws ReflectionException
      * @throws WalletTransferException
      */
-    public function transfer(float|int $amount, Wallet $wallet, ?array $metadata, float|int $feeAmount = 0): static
+    public function transfer(float|int $amount, Wallet $wallet, array $metadata = [], float|int $feeAmount = 0): static
     {
         // check if the wallet destination is the current wallet or not
         if ($this->id === $wallet->id) {
             throw new WalletTransferException('Unable to transfer to the same wallet');
         }
-        $amount = is_float($amount) ? $this->convertToInt($amount) : $amount;
+        $amount = is_float($amount) ? $this->convertToWalletInt($amount) : $amount;
         $feeAmount = is_float($feeAmount) ? $feeAmount : $amount;
         if ($feeAmount > 0) {
             // check to make sure the current wallet has enough balance
@@ -232,28 +231,18 @@ trait CanCalculateWallet
      * Fee can be used if you have a transaction charges against the transaction/processing.
      *
      * @param  float|int|WalletTransaction  $transaction
-     * @param  array|null  $metadata
+     * @param  array  $metadata
      * @return $this
      *
      * @throws InsufficientBalanceException
      * @throws ReflectionException
+     * @throws Exception
      */
-    public function fee(float|int|WalletTransaction $transaction, ?array $metadata): static
+    public function fee(float|int|WalletTransaction $transaction, array $metadata = []): static
     {
-        if ((new ReflectionClass($transaction))->implementsInterface(WalletTransaction::class)) {
-            $amount = $this->convertToInt($transaction->getAmount());
-            if ($amount > $this->raw_balance) {
-                throw new InsufficientBalanceException('Insufficient balance');
-            }
-            $this->decrement('raw_balance', $amount);
-            $this->refresh();
-            $this->transaction(amount: $amount, metadata: $metadata, transaction: $transaction, transactionType: TransactionTypeEnum::FEE);
+        if (is_numeric($transaction)) {
+            $amount = $this->convertToWalletInt($transaction);
 
-            return $this;
-        }
-
-        if (is_float($transaction)) {
-            $amount = $this->convertToInt($transaction);
             if ($amount > $this->raw_balance) {
                 throw new InsufficientBalanceException('Insufficient balance');
             }
@@ -264,14 +253,19 @@ trait CanCalculateWallet
             return $this;
         }
 
-        /** @var int $transaction */
-        if ($transaction > $this->raw_balance) {
+        if (! (new ReflectionClass($transaction))->implementsInterface(WalletTransaction::class)) {
+            throw new Exception('Transaction expects parameter to be a number or a WalletTransaction object.');
+        }
+
+        $amount = $this->convertToWalletInt($transaction->getAmount());
+
+        if ($amount > $this->raw_balance) {
             throw new InsufficientBalanceException('Insufficient balance');
         }
 
-        $this->transaction(amount: $transaction, metadata: $metadata, transactionType: TransactionTypeEnum::FEE);
-        $this->decrement('raw_balance', $transaction);
+        $this->decrement('raw_balance', $amount);
         $this->refresh();
+        $this->transaction(amount: $amount, metadata: $metadata, transaction: $transaction, transactionType: TransactionTypeEnum::FEE);
 
         return $this;
 
@@ -291,8 +285,8 @@ trait CanCalculateWallet
     {
         $this->transactions()->create([
             'amount' => $amount,
-            ...['transaction_id' => (new ReflectionClass($transaction))->implementsInterface(WalletTransaction::class) ? (new ReflectionClass($transaction))->getMethod('getKey')->invoke($transaction) : []],
-            ...['transaction_type' => (new ReflectionClass($transaction))->implementsInterface(WalletTransaction::class) ? get_class($transaction) : []],
+            ...((! is_null($transaction) && (new ReflectionClass($transaction))->implementsInterface(WalletTransaction::class)) ? ['transaction_id' => (new ReflectionClass($transaction))->getMethod('getKey')->invoke($transaction)] : []),
+            ...((! is_null($transaction) && (new ReflectionClass($transaction))->implementsInterface(WalletTransaction::class)) ? ['transaction_type' => get_class($transaction)] : []),
             'running_balance' => $this->raw_balance,
             'metadata' => [
                 ...($metadata ?? []),
@@ -305,12 +299,12 @@ trait CanCalculateWallet
     /**
      * Convert Float amount to whole number
      *
-     * @param  float  $amount
+     * @param  float|int  $amount
      * @return int
      */
-    private function convertToInt(float $amount): int
+    private function convertToWalletInt(float|int $amount): int
     {
-        return (int) $amount * pow(10, $this->decimal_places);
+        return $amount * pow(10, $this->decimal_places);
     }
 
     /**
@@ -321,6 +315,6 @@ trait CanCalculateWallet
      */
     private function convertToDecimal(int $amount): float
     {
-        return (float) number_format($amount / pow(10, $this->decimal_places), $this->decimal_places);
+        return $amount / pow(10, $this->decimal_places);
     }
 }

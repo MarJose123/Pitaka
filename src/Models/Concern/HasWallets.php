@@ -12,8 +12,9 @@ use Str;
 trait HasWallets
 {
     /**
-     * @param string|BackedEnum|null $walletName Wallet Slug Name
+     * @param  string|BackedEnum|null  $walletName  Wallet Slug Name
      * @return Wallet
+     *
      * @throws ReflectionException
      * @throws WalletNotFoundException
      */
