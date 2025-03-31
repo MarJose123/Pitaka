@@ -91,6 +91,7 @@ _or_
 $product = Product::find(1);
 $user->wallet('peso-wallet')->check($product)
 ```
+Implement `WalletTransaction` contract to your `Product` class.
 
 ### Wallet Deposit Transaction
 Creating a wallet transaction by depositing an amount. You can also use the `Wallet` model class instead.
