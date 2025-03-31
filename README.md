@@ -120,6 +120,16 @@ $product = Product::find(1);
 $user->wallet('peso-wallet')->pay($product);
 ```
 
+### Wallet Deduction/Withdraw
+You can deduct or do a withdrawal from the wallet with/out fee.
+```PHP
+ $wallet->withdraw(amount: 900, feeAmount: 100);
+```
+_or_
+```php
+  $wallet->withdraw(1000);
+```
+
 
 ### Retrieve Wallet Balance
 
