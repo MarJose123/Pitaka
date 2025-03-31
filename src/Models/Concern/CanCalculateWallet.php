@@ -46,7 +46,7 @@ trait CanCalculateWallet
     public function check(float|int|WalletTransaction $transaction): bool
     {
         if (is_numeric($transaction)) {
-            $comp = bccomp($this->raw_balance, $this->convertToWalletInt($transaction));
+            $comp = bccomp((string) $this->raw_balance, (string) $this->convertToWalletInt($transaction));
 
             return $comp === 0 || $comp === 1;
         }
@@ -55,7 +55,7 @@ trait CanCalculateWallet
             throw new Exception('Transaction expects parameter to be a number or a WalletTransaction object.');
         }
 
-        $comp = bccomp($this->raw_balance, $this->convertToWalletInt($transaction->getAmount()));
+        $comp = bccomp((string) $this->raw_balance, (string) $this->convertToWalletInt($transaction->getAmount()));
 
         return $comp === 0 || $comp === 1;
     }
@@ -76,7 +76,7 @@ trait CanCalculateWallet
 
         if (is_numeric($transaction)) {
             $amount = $this->convertToWalletInt($transaction);
-            if (bccomp($amount, $this->raw_balance) === 1) {
+            if (bccomp((string) $amount, (string) $this->raw_balance) === 1) {
                 throw new InsufficientBalanceException('Insufficient balance');
             }
 
@@ -94,7 +94,7 @@ trait CanCalculateWallet
 
         $amount = $this->convertToWalletInt($transaction->getAmount());
 
-        if (bccomp($amount, $this->raw_balance) === 1) {
+        if (bccomp((string) $amount, (string) $this->raw_balance) === 1) {
             throw new InsufficientBalanceException('Insufficient balance');
         }
 
@@ -156,7 +156,7 @@ trait CanCalculateWallet
         // check to make sure the current wallet has enough balance
         $combinedAmount = $feeAmount + $amount;
         /** @see https://www.php.net/manual/en/function.bccomp.php */
-        if (bccomp($this->convertToWalletInt($combinedAmount), $this->raw_balance) === 1) {
+        if (bccomp((string) $this->convertToWalletInt($combinedAmount), (string) $this->raw_balance) === 1) {
             throw new InsufficientBalanceException('Insufficient balance');
         }
 
@@ -194,7 +194,7 @@ trait CanCalculateWallet
 
         // check to make sure the current wallet has enough balance
         $combinedAmount = $feeAmount + $amount;
-        if (bccomp($this->convertToWalletInt($combinedAmount), $this->raw_balance) === 1) {
+        if (bccomp((string) $this->convertToWalletInt($combinedAmount), (string) $this->raw_balance) === 1) {
             throw new InsufficientBalanceException('Insufficient balance');
         }
 
@@ -232,7 +232,7 @@ trait CanCalculateWallet
         if (is_numeric($transaction)) {
             $amount = $this->convertToWalletInt($transaction);
 
-            if ($amount > $this->raw_balance) {
+            if (bccomp((string) $amount, (string) $this->raw_balance) === 1) {
                 throw new InsufficientBalanceException('Insufficient balance');
             }
             $this->transaction(amount: $amount, metadata: $metadata, transactionType: TransactionTypeEnum::FEE);
@@ -248,7 +248,7 @@ trait CanCalculateWallet
 
         $amount = $this->convertToWalletInt($transaction->getAmount());
 
-        if ($amount > $this->raw_balance) {
+        if (bccomp((string) $amount, (string) $this->raw_balance) === 1) {
             throw new InsufficientBalanceException('Insufficient balance');
         }
 
