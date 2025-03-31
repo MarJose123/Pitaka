@@ -80,6 +80,17 @@ You can do a transaction in your wallet by using user `relationship` or through 
 > [!CAUTION]
 > Changing your wallet `decimal_places` value may affect your wallet balance result.
 
+### Wallet balance check against Transaction amount
+Check if the wallet balance is enough to do a transaction
+```php
+
+$user->wallet('peso-wallet')->check(500) // will return true/false depending on how much amount left in the wallet
+```
+_or_
+```php
+$product = Product::find(1);
+$user->wallet('peso-wallet')->check($product)
+```
 
 ### Wallet Deposit Transaction
 Creating a wallet transaction by depositing an amount. You can also use the `Wallet` model class instead.
