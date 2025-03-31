@@ -109,10 +109,15 @@ Creating a wallet transaction by depositing an amount. You can also use the `Wal
     $wallet->deposit(1000.58);
 ```
 
-
+### Wallet Pay 
 Creating a wallet transaction by paying an item/shop amount using your wallet.
 ```php
-
+$user->wallet('peso-wallet')->pay(500);
+```
+_or_
+```php
+$product = Product::find(1);
+$user->wallet('peso-wallet')->pay($product);
 ```
 
 
