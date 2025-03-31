@@ -149,14 +149,13 @@ trait CanCalculateWallet
      */
     public function withdraw(float|int $amount, array $metadata = [], float|int $feeAmount = 0): static
     {
-        $amount = is_float($amount) ? $this->convertToWalletInt($amount) : $amount;
-        $feeAmount = is_float($feeAmount) ? $feeAmount : $amount;
-        if ($feeAmount > 0) {
-            // check to make sure the current wallet has enough balance
-            $combinedAmount = $feeAmount + $amount;
-            if ($combinedAmount > $this->raw_balance) {
-                throw new InsufficientBalanceException('Insufficient balance');
-            }
+        $amount = $this->convertToWalletInt($amount);
+        $feeAmount = $this->convertToWalletInt($feeAmount);
+
+        // check to make sure the current wallet has enough balance
+        $combinedAmount = $feeAmount + $amount;
+        if ($combinedAmount > $this->raw_balance) {
+            throw new InsufficientBalanceException('Insufficient balance');
         }
 
         // Create a transaction history for fees
