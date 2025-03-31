@@ -1,6 +1,5 @@
 <?php
 
-use MarJose123\Pitaka\Exceptions\InsufficientBalanceException;
 use function Pest\Laravel\assertDatabaseCount;
 use function PHPUnit\Framework\assertEquals;
 

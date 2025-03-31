@@ -37,7 +37,7 @@ trait CanCalculateWallet
      * Safe check if the balance still enough for creating transactions.
      * If the balance is enough it will return true, else false.
      *
-     * @param float|int|WalletTransaction $transaction
+     * @param  float|int|WalletTransaction  $transaction
      * @return bool
      *
      * @throws ReflectionException
@@ -45,7 +45,7 @@ trait CanCalculateWallet
      */
     public function check(float|int|WalletTransaction $transaction): bool
     {
-        if(is_numeric($transaction)) {
+        if (is_numeric($transaction)) {
             return $this->raw_balance >= $this->convertToWalletInt($transaction);
         }
 
