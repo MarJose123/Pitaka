@@ -130,6 +130,16 @@ _or_
   $wallet->withdraw(1000);
 ```
 
+### Transfer money to other wallet
+You can transfer money to other wallets.
+```php
+$wallet1->transfer(amount: 50, wallet: $wallet2, feeAmount: 50);
+```
+_or_
+```php
+$wallet1->transfer(amount: 50, wallet: $wallet2);
+```
+
 
 ### Retrieve Wallet Balance
 
